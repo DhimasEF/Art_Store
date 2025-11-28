@@ -16,13 +16,13 @@ class KelolaKontenPage extends StatefulWidget {
   final Future<void> Function(int)? uploadAvatarWeb;
 
   const KelolaKontenPage({
-    Key? key,
+    super.key,
     this.username,
     this.avatarUrl,
     this.data,
     this.reloadData,
     this.uploadAvatarWeb,
-  }) : super(key: key);
+  });
 
   @override
   _KelolaKontenPageState createState() => _KelolaKontenPageState();
@@ -69,7 +69,9 @@ class _KelolaKontenPageState extends State<KelolaKontenPage> {
       setState(() {
         data = fetchedData;
         username = fetchedData['username'] ?? '';
-        avatarUrl = fetchedData['avatar'];
+        avatarUrl = (fetchedData['avatar'] != null && fetchedData['avatar'] != "")
+          ? ApiService.avatarBaseUrl + fetchedData['avatar']
+          : null;
         email = fetchedData['email'] ?? '';
       });
     }
@@ -144,7 +146,7 @@ class _KelolaKontenPageState extends State<KelolaKontenPage> {
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(6),
                                 child: Image.network(
-                                  "http://192.168.6.15/project_api/uploads/artworks/$thumb",
+                                  "http://192.168.6.16/flutterapi_app/uploads/artworks/$thumb",
                                   width: 70,
                                   height: 70,
                                   fit: BoxFit.cover,

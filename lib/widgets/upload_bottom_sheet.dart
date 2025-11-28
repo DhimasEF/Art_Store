@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -32,23 +30,21 @@ class _UploadBottomSheetState extends State<UploadBottomSheet> {
     final picker = ImagePicker();
     final results = await picker.pickMultiImage();
 
-    if (results != null) {
-      if (results.length > 5) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Max 5 gambar!")),
-        );
-        return;
-      }
-
-      images = results;
-
-      if (images.isNotEmpty) {
-        mainPreview = await images.first.readAsBytes();
-      }
-
-      setState(() {});
+    if (results.length > 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Max 5 gambar!")),
+      );
+      return;
     }
-  }
+
+    images = results;
+
+    if (images.isNotEmpty) {
+      mainPreview = await images.first.readAsBytes();
+    }
+
+    setState(() {});
+    }
 
   // SUBMIT UPLOAD
   Future submitUpload() async {

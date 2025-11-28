@@ -7,12 +7,12 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onProfileTap;
 
   const AdminAppBar({
-    Key? key,
+    super.key,
     required this.title,
     required this.username,
     required this.avatarUrl,
     required this.onProfileTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

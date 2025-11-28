@@ -11,10 +11,11 @@ import 'package:http/http.dart' as http;
 
 import '../widgets/creator_appbar.dart';
 import '../widgets/creator_drawer.dart';
-import '../widgets/profile_panel.dart';
 
 
 class CreatorDashboardPage extends StatefulWidget {
+  const CreatorDashboardPage({super.key});
+
   @override
   _CreatorDashboardPageState createState() => _CreatorDashboardPageState();
 }
@@ -58,7 +59,9 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
         data = result['data'];
         username = data['username'] ?? '';
         email = data['email'] ?? '';
-        avatarUrl = data['avatar'];
+        avatarUrl = (data['avatar'] != null && data['avatar'] != "")
+          ? ApiService.avatarBaseUrl + data['avatar']
+          : null;
         isLoading = false;
       });
     } else {
@@ -66,8 +69,6 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     }
   }
 
-  @override
-  // Upload avatar via Web
   Future<void> uploadAvatarWeb(int userId) async {
     final input = html.FileUploadInputElement()..accept = 'image/*';
     input.click();
@@ -83,7 +84,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     final base64Image = reader.result as String;
 
     final response = await http.post(
-      Uri.parse('http://192.168.6.15/project_api/profil/upload_avatar_web'),
+      Uri.parse('http://192.168.6.16/flutterapi_app/profil/upload_avatar_web'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'id_user': userId,
@@ -94,7 +95,12 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     if (response.statusCode == 200) {
       final resData = jsonDecode(response.body);
       if (resData['status'] == true) {
-        setState(() => avatarUrl = resData['avatar']);
+        setState(() {
+          avatarUrl = (resData['avatar'] != null && resData['avatar'] != "")
+              ? ApiService.avatarBaseUrl + resData['avatar']
+              : null;
+        });
+
         await loadUserData();
       }
     }

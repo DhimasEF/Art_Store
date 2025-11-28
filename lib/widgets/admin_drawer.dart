@@ -14,13 +14,13 @@ class AdminDrawer extends StatelessWidget {
   final String currentMenu;
 
   const AdminDrawer({
-    Key? key,
+    super.key,
     required this.currentMenu,
     required this.username,
     required this.avatarUrl,
     required this.selectedIndex,
     required this.onItemSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

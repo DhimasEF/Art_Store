@@ -15,13 +15,13 @@ class KelolaUserPage extends StatefulWidget {
   final Future<void> Function(int)? uploadAvatarWeb;
 
   const KelolaUserPage({
-    Key? key,
+    super.key,
     this.username,
     this.avatarUrl,
     this.data,
     this.reloadData,
     this.uploadAvatarWeb,
-  }) : super(key: key);
+  });
 
   @override
   _KelolaUserPageState createState() => _KelolaUserPageState();
@@ -39,7 +39,7 @@ class _KelolaUserPageState extends State<KelolaUserPage>
   bool isLoadingUsers = true;
   int selectedIndex = 2;
 
-  // Untuk animasi modal
+  // Animasi modal
   late AnimationController modalController;
   late Animation<double> opacityAnim;
   late Animation<Offset> slideAnim;
@@ -97,7 +97,9 @@ class _KelolaUserPageState extends State<KelolaUserPage>
       setState(() {
         data = fetchedData;
         username = fetchedData['username'] ?? '';
-        avatarUrl = fetchedData['avatar'];
+        avatarUrl = (fetchedData['avatar'] != null && fetchedData['avatar'] != "")
+            ? ApiService.avatarBaseUrl + fetchedData['avatar']
+            : null;
         email = fetchedData['email'] ?? '';
       });
     }
@@ -143,9 +145,9 @@ class _KelolaUserPageState extends State<KelolaUserPage>
     );
   }
 
-  // ────────────────────────────────────────────────────────────────
-  //  DETAIL MODAL (SLIDE + FADE ANIMATION)
-  // ────────────────────────────────────────────────────────────────
+  //──────────────────────────────
+  // DETAIL MODAL
+  //──────────────────────────────
   void openUserDetail(Map<String, dynamic> user) async {
     modalController.forward(from: 0);
 
@@ -163,18 +165,18 @@ class _KelolaUserPageState extends State<KelolaUserPage>
             child: SlideTransition(
               position: slideAnim,
               child: Material(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
                 color: Colors.white,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
-                    maxHeight: 500, // biar ga kebesaran
+                    maxHeight: 500,
                     minHeight: 250,
                   ),
-                  child: IntrinsicHeight(     // auto fit tinggi
+                  child: IntrinsicHeight(
                     child: Padding(
                       padding: const EdgeInsets.all(22),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min, // penting!!
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Center(
@@ -192,10 +194,11 @@ class _KelolaUserPageState extends State<KelolaUserPage>
                           Center(
                             child: CircleAvatar(
                               radius: 40,
-                              backgroundImage: user['avatar'] != null
-                                  ? NetworkImage(user['avatar'])
-                                  : null,
-                              child: user['avatar'] == null
+                              backgroundImage:
+                                  (user['avatar'] != null && user['avatar'] != "")
+                                      ? NetworkImage(ApiService.avatarBaseUrl + user['avatar'])
+                                      : null,
+                              child: (user['avatar'] == null || user['avatar'] == "")
                                   ? const Icon(Icons.person, size: 40)
                                   : null,
                             ),
@@ -206,8 +209,10 @@ class _KelolaUserPageState extends State<KelolaUserPage>
                           Text("Nama: ${user['name']}"),
                           Text("Email: ${user['email']}"),
                           Text("Role: ${user['role']}"),
+
                           const SizedBox(height: 12),
-                          const Text("Bio:", style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text("Bio:",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                           Text(user['bio'] ?? '-'),
 
                           const Spacer(),
@@ -216,18 +221,17 @@ class _KelolaUserPageState extends State<KelolaUserPage>
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.pop(context);
-                                resetPassword(int.parse(user['id_user'].toString()));
+                                resetPassword(
+                                    int.parse(user['id_user'].toString()));
                               },
                               icon: const Icon(Icons.refresh),
                               label: const Text("Reset Password"),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.redAccent,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
                               ),
                             ),
                           ),
-
                         ],
                       ),
                     ),
@@ -237,14 +241,13 @@ class _KelolaUserPageState extends State<KelolaUserPage>
             ),
           ),
         );
-
       },
     );
   }
 
-  // ────────────────────────────────────────────────────────────────
-  //  BUILD PAGE
-  // ────────────────────────────────────────────────────────────────
+  //──────────────────────────────
+  // BUILD PAGE
+  //──────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -261,6 +264,7 @@ class _KelolaUserPageState extends State<KelolaUserPage>
           editPageBuilder: (d) => EditProfilePage(userData: d),
         ),
       ),
+
       drawer: AdminDrawer(
         currentMenu: 'user',
         username: username,
@@ -271,7 +275,6 @@ class _KelolaUserPageState extends State<KelolaUserPage>
         },
       ),
 
-      // ───────────────────────────────────── LIST USER ──────────────────────
       body: isLoadingUsers
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
@@ -285,10 +288,12 @@ class _KelolaUserPageState extends State<KelolaUserPage>
                       const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: u['avatar'] != null
-                          ? NetworkImage(u['avatar'])
-                          : null,
-                      child: u['avatar'] == null
+                      backgroundImage:
+                          (u['avatar'] != null && u['avatar'] != "")
+                              ? NetworkImage(
+                                  ApiService.avatarBaseUrl + u['avatar'])
+                              : null,
+                      child: (u['avatar'] == null || u['avatar'] == "")
                           ? const Icon(Icons.person)
                           : null,
                     ),
@@ -302,12 +307,12 @@ class _KelolaUserPageState extends State<KelolaUserPage>
                           resetPassword(int.parse(u['id_user']));
                         }
                       },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
                           value: 'detail',
                           child: Text("Detail User"),
                         ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'reset',
                           child: Text("Reset Password"),
                         ),

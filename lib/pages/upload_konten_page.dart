@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/creator_drawer.dart';
@@ -18,7 +17,7 @@ import 'konten_detail_page.dart';
 class ImageSlideshow extends StatefulWidget {
   final List<String> images;
 
-  const ImageSlideshow({required this.images});
+  const ImageSlideshow({super.key, required this.images});
 
   @override
   _ImageSlideshowState createState() => _ImageSlideshowState();
@@ -138,7 +137,9 @@ class _UploadKontenPageState extends State<UploadKontenPage> {
       final d = result['data'] ?? {};
       setState(() {
         username = d['username'] ?? '';
-        avatarUrl = d['avatar'];
+        avatarUrl = (d['avatar'] != null && d['avatar'] != "")
+          ? ApiService.avatarBaseUrl + d['avatar']
+          : null;
         email = d['email'] ?? '';
         data = Map<String, dynamic>.from(d);
       });
@@ -201,7 +202,7 @@ class _UploadKontenPageState extends State<UploadKontenPage> {
     if (item["images"] != null && item["images"] is List) {
       images = (item["images"] as List)
           .map((e) =>
-              "http://192.168.6.15/project_api/uploads/artworks/${e['image_url']}")
+              "http://192.168.6.16/flutterapi_app/uploads/artworks/${e['image_url']}")
           .toList();
     }
 

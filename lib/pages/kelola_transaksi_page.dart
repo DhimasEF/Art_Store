@@ -15,13 +15,13 @@ class KelolaTransaksiPage extends StatefulWidget {
   final Future<void> Function(int)? uploadAvatarWeb;
 
   const KelolaTransaksiPage({
-    Key? key,
+    super.key,
     this.username,
     this.avatarUrl,
     this.data,
     this.reloadData,
     this.uploadAvatarWeb,
-  }) : super(key: key);
+  });
 
   @override
   _KelolaTransaksiPageState createState() => _KelolaTransaksiPageState();
@@ -65,7 +65,9 @@ class _KelolaTransaksiPageState extends State<KelolaTransaksiPage> {
       setState(() {
         data = fetchedData;                         // <-- pastikan data bukan null
         username = fetchedData['username'] ?? '';
-        avatarUrl = fetchedData['avatar'];
+        avatarUrl = (fetchedData['avatar'] != null && fetchedData['avatar'] != "")
+          ? ApiService.avatarBaseUrl + fetchedData['avatar']
+          : null;
         email = fetchedData['email'] ?? '';
       });
     }

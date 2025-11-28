@@ -12,10 +12,10 @@ import 'package:http/http.dart' as http;
 
 import '../widgets/admin_appbar.dart';
 import '../widgets/admin_drawer.dart';
-import '../widgets/profile_panel.dart';
-
 
 class AdminDashboardPage extends StatefulWidget {
+  const AdminDashboardPage({super.key});
+
   @override
   _AdminDashboardPageState createState() => _AdminDashboardPageState();
 }
@@ -59,7 +59,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         data = result['data'];
         username = data['username'] ?? '';
         email = data['email'] ?? '';
-        avatarUrl = data['avatar'];
+        avatarUrl = (data['avatar'] != null && data['avatar'] != "")
+          ? ApiService.avatarBaseUrl + data['avatar']
+          : null;
         isLoading = false;
       });
     } else {
@@ -83,7 +85,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     final base64Image = reader.result as String;
 
     final response = await http.post(
-      Uri.parse('http://192.168.6.15/project_api/profil/upload_avatar_web'),
+      Uri.parse('http://192.168.6.16/flutterapi_app/profil/upload_avatar_web'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'id_user': userId,
@@ -93,8 +95,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     if (response.statusCode == 200) {
       final resData = jsonDecode(response.body);
-      if (resData['status'] == true) {
-        setState(() => avatarUrl = resData['avatar']);
+        if (resData['status'] == true) {
+        setState(() {
+          avatarUrl = (resData['avatar'] != null && resData['avatar'] != "")
+              ? ApiService.avatarBaseUrl + resData['avatar']
+              : null;
+        });
         await loadUserData();
       }
     }

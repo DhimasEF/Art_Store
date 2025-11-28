@@ -56,7 +56,7 @@ Future<void> showProfilePanel(
                     CircleAvatar(
                       radius: 50,
                       backgroundImage: avatarUrl != null
-                          ? NetworkImage(avatarUrl!)
+                          ? NetworkImage(avatarUrl)
                           : const AssetImage('assets/default.jpg')
                               as ImageProvider,
                     ),

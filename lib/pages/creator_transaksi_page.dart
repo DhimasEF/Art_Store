@@ -15,13 +15,13 @@ class CreatorTransaksiPage extends StatefulWidget {
   final Future<void> Function(int)? uploadAvatarWeb;
 
   const CreatorTransaksiPage({
-    Key? key,
+    super.key,
     this.username,
     this.avatarUrl,
     this.data,
     this.reloadData,
     this.uploadAvatarWeb,
-  }) : super(key: key);
+  });
 
   @override
   _CreatorTransaksiPageState createState() => _CreatorTransaksiPageState();
@@ -65,7 +65,9 @@ class _CreatorTransaksiPageState extends State<CreatorTransaksiPage> {
       setState(() {
         data = fetchedData;                         // <-- pastikan data bukan null
         username = fetchedData['username'] ?? '';
-        avatarUrl = fetchedData['avatar'];
+        avatarUrl = (fetchedData['avatar'] != null && fetchedData['avatar'] != "")
+          ? ApiService.avatarBaseUrl + fetchedData['avatar']
+          : null;
         email = fetchedData['email'] ?? '';
       });
     }

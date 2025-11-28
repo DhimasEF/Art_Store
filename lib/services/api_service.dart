@@ -6,8 +6,9 @@ import 'package:mime/mime.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.6.15/project_api/index.php';
-
+  static const String baseUrl = 'http://192.168.6.16/flutterapi_app/index.php';
+  static const String baseUrlimage = 'http://192.168.6.16/flutterapi_app/';
+  static const String avatarBaseUrl = "${baseUrlimage}uploads/avatar/";
   // ============================
   // LOGIN
   // ============================
@@ -256,30 +257,35 @@ class ApiService {
     return [];
   }
 
+  static Future<Map<String, dynamic>> getUploaderProfile(int userId) async {
+    final url = Uri.parse("${baseUrl}/user/uplofile/$userId");
 
-  // ============================
-  // APPROVE
-  // ============================
-  static Future<bool> approveArtwork(int idArtwork) async {
-    final url = Uri.parse("$baseUrl/artwork/approve");
-
-    final response = await http.post(url, body: {
-      "id_artwork": idArtwork.toString(),
-    });
-
-    return jsonDecode(response.body)["success"] == true;
+    final response = await http.get(url);
+    return jsonDecode(response.body);
   }
 
   // ============================
-  // REJECT
+  // Update Status
   // ============================
-  static Future<bool> rejectArtwork(int idArtwork) async {
-    final url = Uri.parse("$baseUrl/artwork/reject");
+  static Future<Map<String, dynamic>> updateArtworkStatus({
+    required String token,
+    required int idArtwork,
+    required String status,
+  }) async {
+    final url = Uri.parse("$baseUrl/artwork/updateStatus");
 
-    final response = await http.post(url, body: {
-      "id_artwork": idArtwork.toString(),
-    });
+    final response = await http.post(
+      url,
+      body: {
+        "id_artwork": idArtwork.toString(),
+        "status": status,
+      },
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    );
 
-    return jsonDecode(response.body)["success"] == true;
+    return jsonDecode(response.body);
   }
+
 }

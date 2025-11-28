@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, dynamic> userData;
-  const EditProfilePage({required this.userData});
+  const EditProfilePage({super.key, required this.userData});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -34,7 +34,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final idUser = widget.userData['id_user'];
       final response = await http.put(
-        Uri.parse('http://192.168.6.15/project_api/index.php/profil/update/$idUser'),
+        Uri.parse('http://192.168.6.16/flutterapi_app/index.php/profil/update/$idUser'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': _usernameController.text,
