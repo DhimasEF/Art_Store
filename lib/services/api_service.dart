@@ -192,6 +192,53 @@ class ApiService {
     throw Exception("API tidak mengembalikan list");
   }
 
+  static Future<List<Map<String, dynamic>>> getAllContentsAdmin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/artwork/all_admin'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    print("Raw Response: ${response.body}"); // DEBUG
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed: ${response.statusCode}");
+    }
+
+    dynamic json;
+    try {
+      json = jsonDecode(response.body);
+    } catch (e) {
+      throw Exception("Response bukan JSON valid");
+    }
+
+    // Jika API balas langsung list
+    if (json is List) {
+      return List<Map<String, dynamic>>.from(json);
+    }
+
+    // Jika API balas object tapi isinya list
+    if (json is Map) {
+      if (json.containsKey('data') && json['data'] is List) {
+        return List<Map<String, dynamic>>.from(json['data']);
+      }
+
+      if (json.containsKey('artworks') && json['artworks'] is List) {
+        return List<Map<String, dynamic>>.from(json['artworks']);
+      }
+
+      // Jika API balas objek kosong → return list kosong
+      return [];
+    }
+
+    throw Exception("API tidak mengembalikan list");
+  }
+
   // ============================
   // GET ALL ARTWORK (FINAL FIX)
   // ============================
@@ -293,11 +340,93 @@ class ApiService {
 
     final response = await http.post(
       url,
-      headers: {"Authorization": "Bearer $token"},
-      body: data,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode(data),
     );
 
+    print(response.body);
     return jsonDecode(response.body);
   }
 
+  static Future<List<Map<String, dynamic>>> getMyOrders(int idBuyer) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/order/my?id_buyer=$idBuyer'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    print("Raw Response My Orders: ${response.body}"); // debug
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed: ${response.statusCode}");
+    }
+
+    dynamic json;
+    try {
+      json = jsonDecode(response.body);
+    } catch (e) {
+      throw Exception("Response bukan JSON valid");
+    }
+
+    if (json is List) {
+      return List<Map<String, dynamic>>.from(json);
+    }
+
+    if (json is Map) {
+      if (json.containsKey('data') && json['data'] is List) {
+        return List<Map<String, dynamic>>.from(json['data']);
+      }
+      return [];
+    }
+
+    throw Exception("API tidak mengembalikan list");
+  }
+  // ApiService.dart
+  static Future<Map<String, dynamic>> getCreatorOrders(int idCreator) async {
+    final url = Uri.parse("$baseUrl/order/my_as_creator?id_creator=$idCreator");
+
+    final response = await http.get(url);
+    return jsonDecode(response.body);
+  } 
+  // ApiService.dart
+  static Future<Map<String, dynamic>> getMyAllOrders(int idBuyer) async {
+    final url = Uri.parse("$baseUrl/order/my_as_buyer?id_buyer=$idBuyer");
+
+    final response = await http.get(url);
+    return jsonDecode(response.body);
+  } 
+
+  static Future<dynamic> uploadPaymentProof({
+    required int idOrder,
+    required int amount,
+    required XFile file,
+  }) async {
+    var uri = Uri.parse("$baseUrl/order/upload_payment");
+    var request = http.MultipartRequest("POST", uri);
+
+    request.fields["id_order"] = idOrder.toString();
+    request.fields["amount"] = amount.toString();
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        "bukti",
+        await file.readAsBytes(),
+        filename: file.name,
+        contentType: MediaType("image", "jpeg"), // aman default
+      ),
+    );
+
+    var res = await request.send();
+    var body = await res.stream.bytesToString();
+
+    return jsonDecode(body);
+  }
 }

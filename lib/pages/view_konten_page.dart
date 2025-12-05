@@ -37,18 +37,50 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
   // Artwork
   List<dynamic> artwork = [];
   List<dynamic> filtered = [];
+  List<dynamic> myOrders = [];
   bool loading = true;
 
   String filter = "all";
   String search = "";
+  int selectedIndex = 1;
 
-  int selectedIndex = 1; // posisi menu Marketplace
+  bool _active = true; // <- tambahkan ini agar async stop jika dispose
 
   @override
   void initState() {
     super.initState();
     loadUserData();
-    loadArtwork();
+    loadMyOrders().then((_) {
+      if (!mounted) return;
+      loadArtwork();
+    });
+  }
+
+  @override
+  void dispose() {
+    _active = false;
+    super.dispose();
+  }
+
+  // ======================================
+  // LOAD MY ORDERS
+  // ======================================
+  Future<void> loadMyOrders() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int userId = prefs.getInt("id_user") ?? 0;
+
+      final result = await ApiService.getMyOrders(userId);
+
+      if (!_active || !mounted) return;
+
+      if (result is List) {
+        setState(() {
+          myOrders = result;
+          applyFilter();
+        });
+      }
+    } catch (_) {}
   }
 
   // ======================================
@@ -74,7 +106,7 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
     final result =
         await ApiService.getDashboardData(token, userId: userId);
 
-    if (!mounted) return;
+    if (!_active || !mounted) return;
 
     if (result['status'] == true) {
       final d = result['data'] as Map<String, dynamic>;
@@ -92,10 +124,14 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
   // LOAD ARTWORK
   // ======================================
   Future<void> loadArtwork() async {
+    if (!_active || !mounted) return;
+
     setState(() => loading = true);
 
     try {
       final data = await ApiService.getAllArtwork();
+
+      if (!_active || !mounted) return;
 
       setState(() {
         artwork = data is List ? data : [];
@@ -103,6 +139,8 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
         loading = false;
       });
     } catch (e) {
+      if (!_active || !mounted) return;
+
       setState(() => loading = false);
     }
   }
@@ -111,12 +149,19 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
   // FILTER + SEARCH
   // ======================================
   void applyFilter() {
+    if (!mounted) return;
+
     List<dynamic> result = artwork;
 
     if (filter == "available") {
       result = result.where((a) => a["status"] == "published").toList();
     } else if (filter == "sold") {
       result = result.where((a) => a["status"] == "sold").toList();
+    } else if (filter == "my") {
+      List<int> ids = myOrders.map((o) {
+        return int.tryParse(o['id_artwork'].toString()) ?? -1;
+      }).toList();
+      result = result.where((a) => ids.contains(a['id_artwork'])).toList();
     }
 
     if (search.isNotEmpty) {
@@ -126,6 +171,7 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
       }).toList();
     }
 
+    if (!mounted) return;
     setState(() => filtered = result);
   }
 
@@ -137,7 +183,7 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
     if (item["images"] is List) {
       images = (item["images"] as List)
           .map((e) =>
-              "http://192.168.6.16/flutterapi_app/uploads/artworks/${e['image_url']}")
+              "http://192.168.6.16/flutterapi_app/uploads/artworks/preview/${e['image_url']}")
           .toList();
     }
 
@@ -151,14 +197,11 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
       borderRadius: BorderRadius.circular(14),
       child: Stack(
         children: [
-          // IMAGE
           Positioned.fill(
             child: images.isNotEmpty
                 ? Image.network(images[0], fit: BoxFit.cover)
                 : Container(color: Colors.grey.shade300),
           ),
-
-          // GRADIENT
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -173,8 +216,6 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
               ),
             ),
           ),
-
-          // CONTENT
           Positioned(
             bottom: 10,
             left: 10,
@@ -182,7 +223,6 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // TITLE
                 Text(
                   item["title"] ?? "(Tanpa judul)",
                   maxLines: 1,
@@ -192,14 +232,10 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 3),
-
-                // STATUS + IMAGE COUNT
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // IMAGE COUNT
                     Row(
                       children: [
                         const Icon(Icons.image,
@@ -212,8 +248,6 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
                         ),
                       ],
                     ),
-
-                    // STATUS BADGE
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 4, vertical: 2),
@@ -240,10 +274,7 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
                     )
                   ],
                 ),
-
                 const SizedBox(height: 3),
-
-                // PRICE
                 Text(
                   item["price"] != null
                       ? "Rp ${item['price']}"
@@ -257,8 +288,6 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
               ],
             ),
           ),
-
-          // CART ICON
           if (status != "sold")
             Positioned(
               top: 10,
@@ -297,7 +326,6 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
           editPageBuilder: (d) => EditProfilePage(userData: d),
         ),
       ),
-
       drawer: UserDrawer(
         currentMenu: "marketplace",
         username: username,
@@ -305,7 +333,6 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
         selectedIndex: selectedIndex,
         onItemSelected: (i) => setState(() => selectedIndex = i),
       ),
-
       body: Column(
         children: [
           // SEARCH
@@ -325,7 +352,65 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
               },
             ),
           ),
-
+          // FILTER BUTTONS
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        filter = "all";
+                        applyFilter();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: filter == "all" ? Colors.blue : Colors.grey[300],
+                      foregroundColor: filter == "all" ? Colors.white : Colors.black,
+                    ),
+                    child: const Text("All"),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        filter = "available";
+                        applyFilter();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          filter == "available" ? Colors.green : Colors.grey[300],
+                      foregroundColor:
+                          filter == "available" ? Colors.white : Colors.black,
+                    ),
+                    child: const Text("Available"),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        filter = "my";
+                        applyFilter();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          filter == "my" ? Colors.orange : Colors.grey[300],
+                      foregroundColor:
+                          filter == "my" ? Colors.white : Colors.black,
+                    ),
+                    child: const Text("My Orders"),
+                  ),
+                ),
+              ],
+            ),
+          ),
           // LIST
           Expanded(
             child: loading

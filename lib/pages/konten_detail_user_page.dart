@@ -152,7 +152,7 @@ class _KontenDetailPage extends State<KontenDetailPage> {
 
     Navigator.pop(context);
 
-    if (result['success'] == true) {
+    if (result['status'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Order berhasil diajukan!")),
       );
@@ -229,7 +229,7 @@ class _KontenDetailPage extends State<KontenDetailPage> {
     if (konten["images"] is List) {
       images = konten["images"]
           .map((e) =>
-              "http://192.168.6.16/flutterapi_app/uploads/artworks/${e['image_url']}")
+              "http://192.168.6.16/flutterapi_app/uploads/artworks/preview/${e['image_url']}")
           .toList();
     }
 
