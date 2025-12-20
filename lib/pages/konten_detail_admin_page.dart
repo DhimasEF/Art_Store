@@ -176,6 +176,8 @@ class _KontenDetailPage extends State<KontenDetailPage> {
   @override
   Widget build(BuildContext context) {
     final konten = widget.konten;
+    final String status = (konten['status'] ?? '').toString().toLowerCase();
+    final bool isDraft = status == 'draft';
 
     List<dynamic> images = [];
     if (konten["images"] is List) {
@@ -326,25 +328,27 @@ class _KontenDetailPage extends State<KontenDetailPage> {
               ),
 
                /// KANAN: ACTION BUTTON (X / V)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  FloatingActionButton(
-                    heroTag: "rejectBtn",
-                    backgroundColor: Colors.red,
-                    mini: true,
-                    onPressed: () => updateStatus("rejected"),
-                    child: const Icon(Icons.close, color: Colors.white, size: 18),
-                  ),
-                  FloatingActionButton(
-                    heroTag: "accBtn",
-                    backgroundColor: Colors.green,
-                    mini: true,
-                    onPressed: () => updateStatus("published"),
-                    child: const Icon(Icons.check, color: Colors.white, size: 18),
-                  ),
-                ],
-              ),
+              if (isDraft)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FloatingActionButton(
+                      heroTag: "rejectBtn",
+                      backgroundColor: Colors.red,
+                      mini: true,
+                      onPressed: () => updateStatus("rejected"),
+                      child: const Icon(Icons.close, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 8),
+                    FloatingActionButton(
+                      heroTag: "accBtn",
+                      backgroundColor: Colors.green,
+                      mini: true,
+                      onPressed: () => updateStatus("published"),
+                      child: const Icon(Icons.check, color: Colors.white, size: 18),
+                    ),
+                  ],
+                ),
             ],
           ),
           

@@ -262,6 +262,16 @@ class _DetailTransaksiOrderPageState extends State<DetailTransaksiOrderPage> {
       return sum + value;
     });
 
+    final paymentStatus = order["payment_status"]; // unpaid | waiting | paid | rejected
+    final orderStatus = order["order_status"];     // pending | canceled | completed
+
+    final bool canPay = paymentStatus == "unpaid";
+    final bool canCancel =
+        paymentStatus == "unpaid" || paymentStatus == "rejected";
+    final bool canDownload =
+        paymentStatus == "paid" && orderStatus == "completed";
+
+
     return Scaffold(
       appBar: UserAppBar(
         title: "Detail Transaksi",
@@ -291,9 +301,20 @@ class _DetailTransaksiOrderPageState extends State<DetailTransaksiOrderPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Order #${order['id_order']}",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(Icons.arrow_back),
+                ),
+                const SizedBox(width: 10), // ← JARAK DI SINI
+                Expanded(
+                  child: Text(
+                    "Order #${order['id_order']}",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 6),
             Text(
@@ -340,12 +361,16 @@ class _DetailTransaksiOrderPageState extends State<DetailTransaksiOrderPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    (order["payment_status"] ?? "unknown").toUpperCase(),
+                    paymentStatus == "waiting"
+                        ? "MENUNGGU KONFIRMASI"
+                        : paymentStatus.toUpperCase(),
                     style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: order["payment_status"] == "paid"
+                      fontWeight: FontWeight.bold,
+                      color: paymentStatus == "paid"
                           ? Colors.green
-                          : Colors.orange,
+                          : paymentStatus == "waiting"
+                              ? Colors.orange
+                              : Colors.redAccent,
                     ),
                   ),
                   Text(
@@ -454,37 +479,86 @@ class _DetailTransaksiOrderPageState extends State<DetailTransaksiOrderPage> {
 
             SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: order["payment_status"] == "paid"
-                  ? null
-                  : () => showPaymentDialog(totalPrice),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+            if (canPay)
+              ElevatedButton(
+                onPressed: () => showPaymentDialog(totalPrice),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text("Bayar Sekarang"),
               ),
-              child: Text(
-                "Bayar Sekarang",
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
 
             SizedBox(height: 14),
 
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+            if (canCancel)
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final confirm = await showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: Text("Batalkan Order?"),
+                        content: Text(
+                          "Order yang dibatalkan tidak dapat dikembalikan.",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text("Tidak"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                            ),
+                            child: Text("Ya, Batalkan"),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      await ApiService.cancelOrder(widget.idOrder);
+                      widget.reloadData?.call();
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    minimumSize: Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    "Batalkan Order",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
               ),
-              child: Text(
-                "Batalkan Order",
-                style: TextStyle(fontSize: 16, color: Colors.white),
+
+            SizedBox(height: 14),
+
+            if (canDownload)
+              ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: download file original
+                },
+                icon: Icon(Icons.download),
+                label: Text("Download File Original"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
-            ),
 
             SizedBox(height: 40),
           ],

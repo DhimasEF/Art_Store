@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
-import '../widgets/creator_drawer.dart';
-import '../widgets/creator_appbar.dart';
+import '../widgets/admin_drawer.dart';
+import '../widgets/admin_appbar.dart';
 import '../widgets/profile_panel.dart';
 import 'edit_profil_page.dart';
 import 'login_page.dart';
 import '../services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DetailCreatorTransaksiPage extends StatefulWidget {
+  String formatRupiah(dynamic value) {
+      if (value == null) return "0";
+
+      // ubah ke string, buang semua selain angka
+      final cleaned = value.toString().replaceAll(RegExp(r'[^0-9]'), '');
+
+      return cleaned;
+    }
+
+class DetailTransaksiAdminPage extends StatefulWidget {
   final Map<String, dynamic> order; // ← menerima data Order langsung
   final String? username;
   final String? avatarUrl;
@@ -17,7 +26,7 @@ class DetailCreatorTransaksiPage extends StatefulWidget {
   // final Future<void> Function(int) uploadAvatarMobile;
   final int idOrder;
 
-  const DetailCreatorTransaksiPage({
+  const DetailTransaksiAdminPage({
     super.key,
     required this.order,
     this.username,
@@ -30,12 +39,12 @@ class DetailCreatorTransaksiPage extends StatefulWidget {
   });
 
   @override
-  _DetailCreatorTransaksiPageState createState() =>
-      _DetailCreatorTransaksiPageState();
+  _DetailTransaksiAdminPageState createState() =>
+      _DetailTransaksiAdminPageState();
 }
 
-class _DetailCreatorTransaksiPageState
-    extends State<DetailCreatorTransaksiPage> {
+class _DetailTransaksiAdminPageState
+    extends State<DetailTransaksiAdminPage> {
     String username = '';
     String email = '';
     String role = '';
@@ -220,7 +229,7 @@ class _DetailCreatorTransaksiPageState
 
     role = prefs.getString('role') ?? '';
 
-    if (role != 'creator') {
+    if (role != 'admin') {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => LoginPage()),
@@ -280,7 +289,7 @@ class _DetailCreatorTransaksiPageState
         paymentStatus == 'paid' || paymentStatus == 'rejected';
     
     return Scaffold(
-      appBar: CreatorAppBar(
+      appBar: AdminAppBar(
         title: "Detail Transaksi",
         username: username,
         avatarUrl: avatarUrl,
@@ -294,7 +303,7 @@ class _DetailCreatorTransaksiPageState
           editPageBuilder: (d) => EditProfilePage(userData: d),
         ),
       ),
-      drawer: CreatorDrawer(
+      drawer: AdminDrawer(
         currentMenu: 'transaksi',
         username: username,
         avatarUrl: avatarUrl,
@@ -449,10 +458,11 @@ class _DetailCreatorTransaksiPageState
                           ),
                           SizedBox(height: 4),
                           Text(
-                            "Rp ${art["price"]}",
+                            "Rp ${formatRupiah(art["price"])}",
                             style: TextStyle(
-                                color: Colors.green.shade700,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -475,7 +485,7 @@ class _DetailCreatorTransaksiPageState
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  "Rp $totalPrice",
+                  "Rp ${formatRupiah(totalPrice)}",
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

@@ -38,7 +38,7 @@ class _OrderTransaksiPageState extends State<OrderTransaksiPage> {
   String? avatarUrl;
   Map<String, dynamic>? data;
 
-   bool isLoadingOrders = true;
+  bool isLoadingOrders = true;
 
   /// hasil akhir → list order yg sudah dikelompokkan
   List<Map<String, dynamic>> groupedOrders = [];

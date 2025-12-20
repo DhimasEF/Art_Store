@@ -431,18 +431,70 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> acceptPayment(int idOrder) async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString("token") ?? "";
+
   final res = await http.post(
     Uri.parse("$baseUrl/order/accept-payment"),
-    body: {"id_order": idOrder.toString()},
+    headers: {
+      "Authorization": "Bearer $token",
+      "Accept": "application/json",
+    },
+    body: {
+      "id_order": idOrder.toString(),
+    },
   );
+
   return jsonDecode(res.body);
 }
 
 static Future<Map<String, dynamic>> rejectPayment(int idOrder) async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString("token") ?? "";
+
   final res = await http.post(
     Uri.parse("$baseUrl/order/reject-payment"),
-    body: {"id_order": idOrder.toString()},
+    headers: {
+      "Authorization": "Bearer $token",
+      "Accept": "application/json",
+    },
+    body: {
+      "id_order": idOrder.toString(),
+    },
   );
+
+  return jsonDecode(res.body);
+}
+
+
+static Future<Map<String, dynamic>> cancelOrder(int idOrder) async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token') ?? '';
+
+  final res = await http.put(
+    Uri.parse("$baseUrl/order/cancel/$idOrder"),
+    headers: {
+      "Authorization": "Bearer $token",
+      "Accept": "application/json",
+    },
+  );
+
+  return jsonDecode(res.body);
+}
+
+
+static Future<Map<String, dynamic>> getAllOrdersAdmin() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString("token") ?? "";
+
+  final res = await http.get(
+    Uri.parse("$baseUrl/order/all-order"),
+    headers: {
+      "Authorization": "Bearer $token",
+      "Accept": "application/json",
+    },
+  );
+  print(res.body);
   return jsonDecode(res.body);
 }
 
