@@ -551,8 +551,35 @@ class _DetailTransaksiOrderPageState extends State<DetailTransaksiOrderPage> {
 
             if (canDownload)
               ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: download file original
+                onPressed: () async {
+                  try {
+                    final api = ApiService();
+
+                    final savePath =
+                        "/storage/emulated/0/Download/order_${widget.idOrder}.zip";
+
+                    await api.downloadOrderArtwork(
+                      idOrder: widget.idOrder,
+                      savePath: savePath,
+                      onProgress: (received, total) {
+                        if (total != -1) {
+                          final progress =
+                              (received / total * 100).toStringAsFixed(0);
+                          debugPrint("Download $progress%");
+                        }
+                      },
+                    );
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Download selesai")),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Download gagal")),
+                    );
+                  }
                 },
                 icon: Icon(Icons.download),
                 label: Text("Download File Original"),

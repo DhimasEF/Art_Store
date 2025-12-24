@@ -5,18 +5,20 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/client_context.dart';
+import 'package:dio/dio.dart';
+import 'dart:io';
 
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:3000';
   // static const String baseUrl = 'http://192.168.6.16:3000';
   // static const String baseUrl = 'http://localhost:3000';
-  // static const String baseUrl = 'http://192.168.137.42:3000';
+  // static const String baseUrl = 'http://192.168.137.241:3000';
   // static const String baseUrl = 'https://murally-ultramicroscopical-mittie.ngrok-free.dev';
   static const String baseUrlimage = 'http://10.0.2.2:3000';
   // static const String baseUrlimage = 'http://192.168.6.16:3000';
   // static const String baseUrlimage = 'http://localhost:3000';
-  // static const String baseUrlimage = 'http://192.168.137.42:3000';
+  // static const String baseUrlimage = 'http://192.168.137.241:3000';
   // static const String baseUrlimage = 'https://murally-ultramicroscopical-mittie.ngrok-free.dev';
   static const String avatarBaseUrl = "${baseUrlimage}/uploads/avatar/";
 
@@ -548,4 +550,28 @@ class ApiService {
     return jsonDecode(res.body);
   }
 
+  Future<void> downloadOrderArtwork({
+    required int idOrder,
+    required String savePath,
+    Function(int received, int total)? onProgress,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token") ?? "";
+
+    final dio = Dio();
+
+    await dio.download(
+      "$baseUrl/orders/$idOrder/download",
+      savePath,
+      onReceiveProgress: onProgress,
+      options: Options(
+        headers: {
+          "Authorization": "Bearer $token",
+        },
+        responseType: ResponseType.bytes,
+        followRedirects: false,
+        validateStatus: (status) => status! < 500,
+      ),
+    );
+  }
 }

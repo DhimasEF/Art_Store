@@ -47,7 +47,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         // Uri.parse('http://192.168.6.16:3000/profil/update/$idUser'),
         // Uri.parse('https://murally-ultramicroscopical-mittie.ngrok-free.dev/profil/update/$idUser'),
         // Uri.parse('http://localhost:3000/profil/update/$idUser'),
-        // Uri.parse('http://192.168.137.42:3000/profil/update/$idUser'),
+        // Uri.parse('http://192.168.137.241:3000/profil/update/$idUser'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': _usernameController.text,
