@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:http/http.dart' as http;
 
@@ -14,16 +14,21 @@ class ClientContext {
     String device = "unknown";
     String platform = "unknown";
 
-    if (Platform.isAndroid) {
-      final a = await deviceInfo.androidInfo;
-      device = "${a.brand} ${a.model}";
-      platform = "android";
-    } else if (Platform.isIOS) {
-      final i = await deviceInfo.iosInfo;
-      device = i.utsname.machine ?? "iOS";
-      platform = "ios";
-    } else {
+    if (kIsWeb) {
       platform = "web";
+      device = "browser";
+    } else {
+      try {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          final a = await deviceInfo.androidInfo;
+          device = "${a.brand} ${a.model}";
+          platform = "android";
+        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+          final i = await deviceInfo.iosInfo;
+          device = i.utsname.machine ?? "iOS";
+          platform = "ios";
+        }
+      } catch (_) {}
     }
 
     String ip = "unknown";

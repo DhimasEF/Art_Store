@@ -285,6 +285,24 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                Row(
+                  children: [
+                    // const Icon(Icons.favorite, size: 14, color: Colors.white70),
+                    // const SizedBox(width: 4),
+                    // Text(
+                    //   "${item['total_favorite'] ?? 0}",
+                    //   style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    // ),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.comment, size: 14, color: Colors.white70),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${item['total_comment'] ?? 0}",
+                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+
               ],
             ),
           ),
@@ -418,39 +436,57 @@ class _ViewKontenPageState extends State<ViewKontenPage> {
                 ? const Center(child: CircularProgressIndicator())
                 : filtered.isEmpty
                     ? const Center(child: Text("Tidak ada konten ditemukan"))
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: filtered.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 0.78,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                        itemBuilder: (_, i) {
-                          final item = filtered[i];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => KontenDetailPage(
-                                    konten: item,
-                                    currentMenu: 'konten',
-                                    selectedIndex: selectedIndex,
-                                    username: username,
-                                    avatarUrl: avatarUrl,
-                                    data: data,
-                                    reloadData: loadUserData,
+                    : LayoutBuilder(
+                      builder: (context, constraints) {
+                        int crossAxisCount = 2; // default HP
+
+                        if (constraints.maxWidth > 1400) {
+                          crossAxisCount = 5;
+                        } else if (constraints.maxWidth > 1100) {
+                          crossAxisCount = 4;
+                        } else if (constraints.maxWidth > 800) {
+                          crossAxisCount = 3;
+                        }
+
+                        return GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filtered.length,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            childAspectRatio: 0.78,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                          itemBuilder: (_, i) {
+                            final item = filtered[i];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => KontenDetailPage(
+                                      key: ValueKey(item['id_artwork']),
+                                      konten: item,
+                                      currentMenu: 'konten',
+                                      selectedIndex: selectedIndex,
+                                      username: username,
+                                      avatarUrl: avatarUrl,
+                                      data: data,
+                                      reloadData: loadUserData,
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                            child: buildContentItem(item),
-                          );
-                        },
-                      ),
+                                ).then((changed) {
+                                  if (changed == true) {
+                                    loadArtwork();
+                                  }
+                                });
+                              },
+                              child: buildContentItem(item),
+                            );
+                          },
+                        );
+                      },
+                    ),
           ),
         ],
       ),

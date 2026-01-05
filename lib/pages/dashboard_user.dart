@@ -118,10 +118,10 @@ class _UserDashboardPageState extends State<UserDashboardPage> {
 
     final response = await http.post(
       // Uri.parse('http://10.0.2.2:3000/profil/upload-avatar'),
-      // Uri.parse('http://192.168.6.16:3000/profil/upload-avatar'),
+      Uri.parse('http://192.168.6.16:3000/profil/upload-avatar'),
       // Uri.parse('https://murally-ultramicroscopical-mittie.ngrok-free.dev/profil/upload-avatar'),
       // Uri.parse('http://localhost:3000/profil/upload-avatar'),
-      Uri.parse('http://192.168.137.188:3000/profil/upload-avatar'),
+      // Uri.parse('http://192.168.137.188:3000/profil/upload-avatar'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'id_user': userId,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+// import 'dart:nativewrappers/_internal/vm/bin/vmservice_io.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -6,19 +7,19 @@ import 'package:mime/mime.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/client_context.dart';
 import 'package:dio/dio.dart';
-import 'dart:io';
+// import 'dart:io';
 
 
 class ApiService {
   // static const String baseUrl = 'http://10.0.2.2:3000';
-  // static const String baseUrl = 'http://192.168.6.16:3000';
+  static const String baseUrl = 'http://192.168.6.16:3000';
   // static const String baseUrl = 'http://localhost:3000';
-  static const String baseUrl = 'http://192.168.137.188:3000';
+  // static const String baseUrl = 'http://192.168.137.188:3000';
   // static const String baseUrl = 'https://murally-ultramicroscopical-mittie.ngrok-free.dev';
   // static const String baseUrlimage = 'http://10.0.2.2:3000';
-  // static const String baseUrlimage = 'http://192.168.6.16:3000';
+  static const String baseUrlimage = 'http://192.168.6.16:3000';
   // static const String baseUrlimage = 'http://localhost:3000';
-  static const String baseUrlimage = 'http://192.168.137.188:3000';
+  // static const String baseUrlimage = 'http://192.168.137.188:3000';
   // static const String baseUrlimage = 'https://murally-ultramicroscopical-mittie.ngrok-free.dev';
   static const String avatarBaseUrl = "${baseUrlimage}/uploads/avatar/";
 
@@ -575,4 +576,108 @@ class ApiService {
       ),
     );
   }
+
+  static Future<void> addComment(
+    String token,
+    int idArtwork,
+    String comment,
+  ) async {
+    final clientHeader = await _clientHeader();
+
+    final res = await http.post(
+      Uri.parse("$baseUrl/comment"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+        ...clientHeader,
+      },
+      body: jsonEncode({
+        "id_artwork": idArtwork,
+        "comment_text": comment, // ✅ FIX
+      }),
+    );
+
+    final data = jsonDecode(res.body);
+    if (res.statusCode != 201) {
+      throw Exception("Gagal add comment");
+    }
+  }
+
+  static Future<Map<String, dynamic>> toggleFavorite(
+    String token,
+    int idArtwork,
+  ) async {
+    final clientHeader = await _clientHeader();
+
+    final res = await http.post(
+      Uri.parse("$baseUrl/favorite/toggle/$idArtwork"),
+      headers: {
+        "Authorization": "Bearer $token",
+        ...clientHeader,
+      },
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Gagal toggle favorite");
+    }
+
+    return jsonDecode(res.body);
+  }
+
+  static Future<void> deleteComment(String token, int idComment) async {
+    final clientHeader = await _clientHeader();
+    final res = await http.delete(
+      Uri.parse("$baseUrl/comment/$idComment"),
+      headers: {
+        "Authorization": "Bearer $token",
+        ...clientHeader,
+      },
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Gagal hapus komentar");
+    }
+  }
+
+  static Future<Map<String, dynamic>> getComments(int idArtwork) async {
+    final clientHeader = await _clientHeader();
+    final res = await http.get(
+      Uri.parse("$baseUrl/comment/artwork/$idArtwork"),
+      headers: {
+        ...clientHeader,
+      },
+    );
+
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body);
+    } else {
+      throw Exception("Gagal load komentar");
+    }
+  }
+
+  static Future<Map<String, dynamic>> getFavoriteStatus(
+    String token,
+    int idArtwork,
+  ) async {
+    final clientHeader = await _clientHeader();
+    final res = await http.get(
+      Uri.parse('$baseUrl/favorite/status/$idArtwork'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        ...clientHeader,
+      },
+    );
+
+    final json = jsonDecode(res.body);
+
+    if (res.statusCode == 200 && json['status'] == true) {
+      return {
+        'favorited': json['data']['favorited'] ?? false,
+        'total_favorite': json['data']['total_favorite'] ?? 0,
+      };
+    }
+
+    throw Exception('Failed get favorite status');
+  }
+
 }

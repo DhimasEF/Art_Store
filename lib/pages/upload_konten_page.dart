@@ -63,7 +63,6 @@ String capitalize(String text) {
   return text[0].toUpperCase() + text.substring(1).toLowerCase();
 }
 
-
 // ============================================================
 //  MAIN PAGE
 // ============================================================
@@ -224,18 +223,15 @@ class _UploadKontenPageState extends State<UploadKontenPage> {
       images = (item["images"] as List)
           .map((e) =>
               // "http://10.0.2.2:3000/uploads/artworks/preview/${e['preview_url']}")
-              // "http://192.168.6.16:3000/uploads/artworks/preview/${e['preview_url']}")
+              "http://192.168.6.16:3000/uploads/artworks/preview/${e['preview_url']}")
               // "https://murally-ultramicroscopical-mittie.ngrok-free.dev/uploads/artworks/preview/${e['preview_url']}")
               // "http://localhost:3000/uploads/artworks/preview/${e['preview_url']}")
-              "http://192.168.137.188:3000/uploads/artworks/preview/${e['preview_url']}")
+              // "http://192.168.137.188:3000/uploads/artworks/preview/${e['preview_url']}")
           .toList();
     }
 
     String status = (item['status'] ?? 'draft').toString().toLowerCase();
-    String price = item['price']?.toString() ?? "Rp -";
 
-    // Warna badge berdasarkan status
-    // Pilih warna
     Color statusColor = {
       "published": Colors.green,
       "draft": Colors.grey,
@@ -243,7 +239,6 @@ class _UploadKontenPageState extends State<UploadKontenPage> {
       "sold": Colors.orange,
     }[status] ?? Colors.grey;
 
-    // Pilih icon
     IconData statusIcon = {
       "published": Icons.check_circle,
       "draft": Icons.pending,
@@ -252,24 +247,24 @@ class _UploadKontenPageState extends State<UploadKontenPage> {
     }[status] ?? Icons.help;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(14),
       child: Stack(
         children: [
-          // Background image
+          // IMAGE
           Positioned.fill(
             child: images.isNotEmpty
                 ? Image.network(images[0], fit: BoxFit.cover)
                 : Container(color: Colors.grey.shade300),
           ),
 
-          // Gradient overlay
+          // GRADIENT
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.70),
+                    Colors.black.withOpacity(0.7),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -278,113 +273,123 @@ class _UploadKontenPageState extends State<UploadKontenPage> {
             ),
           ),
 
-          // ======= INFORMASI BAWAH =======
+          // CONTENT
           Positioned(
+            bottom: 10,
             left: 10,
             right: 10,
-            bottom: 10,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Judul
+                // TITLE
                 Text(
-                  item["title"] ?? "(tanpa judul)",
+                  item["title"] ?? "(Tanpa judul)",
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
 
-                // ICON GAMBAR + STATUS BADGE
+                // IMAGE COUNT + STATUS
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // jumlah gambar
                     Row(
                       children: [
-                        Icon(Icons.image, color: Colors.white70, size: 14),
+                        const Icon(Icons.image,
+                            size: 14, color: Colors.white70),
                         const SizedBox(width: 4),
                         Text(
                           images.length.toString(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 12,
+                            fontSize: 11,
                           ),
                         ),
                       ],
                     ),
-
-                    // Badge status
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
                       decoration: BoxDecoration(
                         color: statusColor,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            statusIcon,
-                            size: 11,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 3),
+                          Icon(statusIcon,
+                              size: 11, color: Colors.white),
+                          const SizedBox(width: 4),
                           Text(
-                            capitalize(status),        // ← kapital huruf awal
+                            capitalize(status),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 9,
+                              fontSize: 8,
                               fontWeight: FontWeight.bold,
-                              fontStyle: FontStyle.italic,   // ← italic
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
 
-                // HARGA
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    item["price"] != null ? "Rp ${item['price']}" : "Rp -",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: const Color.fromARGB(255, 255, 255, 255),
-                      fontSize: 12,
-                    ),
+                // PRICE
+                Text(
+                  item["price"] != null
+                      ? "Rp ${item['price']}"
+                      : "Rp -",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
+
+                // COMMENT COUNT (optional)
+                Row(
+                  children: [
+                    const Icon(Icons.comment,
+                        size: 14, color: Colors.white70),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${item['total_comment'] ?? 0}",
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
-          // Icon open
-          Positioned(
-            right: 10,
-            top: 10,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                color: Colors.white24,
-              ),
-              child: const Icon(
-                Icons.open_in_new,
-                color: Colors.white,
-                size: 20,
+          // ICON TOP RIGHT (creator logic)
+          if (status != "sold")
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black38,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: const Icon(
+                  Icons.edit,
+                  size: 18,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -400,39 +405,54 @@ class _UploadKontenPageState extends State<UploadKontenPage> {
     if (loading) return const Center(child: CircularProgressIndicator());
     if (list.isEmpty) return const Center(child: Text("Belum ada konten"));
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: list.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,            // jumlah kolom
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.78,       // biar proporsional seperti card
-      ),
-      itemBuilder: (_, i) {
-        final item = list[i];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => KontenDetailPage(
-                  konten: item,
-                  currentMenu: 'konten',
-                  selectedIndex: selectedIndex,
-                  username: username,
-                  avatarUrl: avatarUrl,
-                  data: data,
-                  reloadData: loadUserData,
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = 2;
+
+        if (constraints.maxWidth > 1400) {
+          crossAxisCount = 5;
+        } else if (constraints.maxWidth > 1100) {
+          crossAxisCount = 4;
+        } else if (constraints.maxWidth > 800) {
+          crossAxisCount = 3;
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: list.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.78,
+          ),
+          itemBuilder: (_, i) {
+            final item = list[i];
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => KontenDetailPage(
+                      konten: item,
+                      currentMenu: 'konten',
+                      selectedIndex: selectedIndex,
+                      username: username,
+                      avatarUrl: avatarUrl,
+                      data: data,
+                      reloadData: loadUserData,
+                    ),
+                  ),
+                );
+              },
+              child: buildContentItem(item),
             );
           },
-          child: buildContentItem(item),
         );
       },
     );
   }
+
 
   // ============================================================
   //  PAGE BUILD

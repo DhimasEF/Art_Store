@@ -42,18 +42,73 @@ class _KontenDetailPage extends State<KontenDetailPage> {
   String role = '';
   String? avatarUrl;
   Map<String, dynamic>? data;
+  // bool isFavorited = false;
+  // int totalFavorite = 0;
+  // bool isFavoriteLoading = false;
+  int totalComment = 0;
+  final TextEditingController commentCtrl = TextEditingController();
+  List comments = [];
+  int currentUserId = 0;
+  late Map<String, dynamic> kontenState;
+  bool hasChanged = false;
+
+  // int _favoriteRequestVersion = 0;
+  // bool favoriteLoaded = false;
 
   @override
   void initState() {
     super.initState();
+
+    // 🔥 COPY DATA WIDGET KE STATE LOKAL
+    kontenState = Map<String, dynamic>.from(widget.konten);
+
+    // isFavorited = kontenState['is_favorited'] == true;
+    // totalFavorite = kontenState['total_favorite'] ?? 0;
+
+    // isFavoriteLoading = false;
+    comments = [];
+    totalComment = kontenState['total_comment'] ?? 0;;
+
     loadUserData();
+    loadComments();
+    // loadFavoriteStatus();
   }
+
+
+  bool canDeleteComment(Map c) {
+    return c['id_user'] == currentUserId ||
+        role == 'admin' ||
+        kontenState['id_user'] == currentUserId;
+  }
+
+  // Future<void> loadFavoriteStatus() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   final token = prefs.getString('token') ?? '';
+
+  //   try {
+  //     final res = await ApiService.getFavoriteStatus(
+  //       token,
+  //       kontenState['id_artwork'],
+  //     );
+
+  //     if (!mounted) return;
+
+  //     setState(() {
+  //       isFavorited = res['favorited'] == true;
+  //       totalFavorite = res['total_favorite'] ?? 0;
+  //       // favoriteLoaded = true;
+  //     });
+  //   } catch (e) {
+  //     debugPrint("loadFavoriteStatus error: $e");
+  //   }
+  // }
 
   Future<void> loadUserData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String token = prefs.getString('token') ?? '';
     int userId = prefs.getInt('id_user') ?? 0;
     role = prefs.getString('role') ?? '';
+    currentUserId = userId;
 
     if (role != 'user') {
       Navigator.pushReplacement(
@@ -76,6 +131,100 @@ class _KontenDetailPage extends State<KontenDetailPage> {
           : null;
         email = fetchedData['email'] ?? '';
       });
+    }
+  }
+
+  Future<void> loadComments() async {
+    try {
+      final res = await ApiService.getComments(kontenState['id_artwork']);
+      setState(() {
+        comments = res['data']['comments'] ?? [];
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  // Future<void> toggleFavorite() async {
+  //   if (isFavoriteLoading) return;
+
+  //   setState(() {
+  //     isFavoriteLoading = true;
+  //   });
+
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   final token = prefs.getString('token') ?? '';
+
+  //   try {
+  //     final res = await ApiService.toggleFavorite(
+  //       token,
+  //       kontenState['id_artwork'],
+  //     );
+
+  //     if (!mounted) return;
+
+  //     setState(() {
+  //       isFavorited = res['favorited'] == true;
+  //       totalFavorite = res['total_favorite'] ?? totalFavorite;
+
+  //       // 🔥 UPDATE STATE KONTEN (INI KUNCI)
+  //       kontenState['is_favorited'] = isFavorited;
+  //       kontenState['total_favorite'] = totalFavorite;
+
+  //       hasChanged = true; // 🔥 INI KUNCINYA
+  //     });
+  //   } catch (e) {
+  //     debugPrint("toggleFavorite error: $e");
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() {
+  //         isFavoriteLoading = false;
+  //       });
+  //     }
+  //   }
+  // }
+
+  Future<void> deleteComment(int idComment, int index) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      await ApiService.deleteComment(token, idComment);
+      setState(() {
+        comments.removeAt(index);
+        totalComment -= 1;
+      });
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Gagal menghapus komentar")),
+      );
+    }
+  }
+
+  Future<void> submitComment() async {
+    final text = commentCtrl.text.trim();
+    if (text.isEmpty) return;
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      await ApiService.addComment(
+        token,
+        kontenState['id_artwork'],
+        text,
+      );
+
+      setState(() {
+        totalComment += 1;
+        commentCtrl.clear();
+      });
+
+      loadComments();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Gagal mengirim komentar")),
+      );
     }
   }
   
@@ -225,17 +374,24 @@ class _KontenDetailPage extends State<KontenDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final konten = widget.konten;
+    // if (!favoriteLoaded) {
+    //   return const Scaffold(
+    //     body: Center(
+    //       child: CircularProgressIndicator(),
+    //     ),
+    //   );
+    // }
+    final konten = kontenState;
 
     List<dynamic> images = [];
     if (konten["images"] is List) {
       images = konten["images"]
           .map((e) =>
               // "http://10.0.2.2:3000/uploads/artworks/preview/${e['preview_url']}")
-              // "http://192.168.6.16:3000/uploads/artworks/preview/${e['preview_url']}")
+              "http://192.168.6.16:3000/uploads/artworks/preview/${e['preview_url']}")
               // "https://murally-ultramicroscopical-mittie.ngrok-free.dev/uploads/artworks/preview/${e['preview_url']}")
               // "http://localhost:3000/uploads/artworks/preview/${e['preview_url']}")
-              "http://192.168.137.188:3000/uploads/artworks/preview/${e['preview_url']}")
+              // "http://192.168.137.188:3000/uploads/artworks/preview/${e['preview_url']}")
           .toList();
     }
 
@@ -244,8 +400,12 @@ class _KontenDetailPage extends State<KontenDetailPage> {
     if (konten["tags"] is List) {
       tags = konten["tags"].map((e) => e['tag_name']).toList();
     }
-
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, hasChanged);
+        return false;
+      },
+      child: Scaffold(
       drawer: UserDrawer(
         currentMenu: widget.currentMenu,
         username: username,
@@ -277,7 +437,7 @@ class _KontenDetailPage extends State<KontenDetailPage> {
             children: [
               // 🔙 BACK BUTTON
               InkWell(
-                onTap: () => Navigator.pop(context),
+                onTap: () => Navigator.pop(context,hasChanged),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
@@ -433,9 +593,80 @@ class _KontenDetailPage extends State<KontenDetailPage> {
           ),
           const SizedBox(height: 20),
 
+          Row(
+            children: [
+              // IconButton(
+              //   onPressed: isFavoriteLoading ? null : toggleFavorite,
+              //   icon: AnimatedScale(
+              //     scale: isFavorited ? 1.2 : 1.0,
+              //     duration: const Duration(milliseconds: 150),
+              //     child: Icon(
+              //       isFavorited ? Icons.favorite : Icons.favorite_border,
+              //       color: isFavorited ? Colors.red : Colors.grey,
+              //     ),
+              //   ),
+              // ),
+              // Text("$totalFavorite"),
+              const SizedBox(width: 20),
+              const Icon(Icons.comment, size: 18),
+              const SizedBox(width: 4),
+              Text("$totalComment"),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          /// 🔥 COMMENT INPUT
+          TextField(
+            controller: commentCtrl,
+            decoration: InputDecoration(
+              hintText: "Tulis komentar...",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: submitComment,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+            
+          /// 🔥 COMMENT LIST
+          ListView.builder(
+            itemCount: comments.length,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              final c = comments[index];
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: c['avatar'] != null
+                      ? NetworkImage(ApiService.avatarBaseUrl + c['avatar'])
+                      : null,
+                  child: c['avatar'] == null ? const Icon(Icons.person) : null,
+                ),
+                title: Text(c['username']),
+                subtitle: Text(c['comment_text']),
+                trailing: canDeleteComment(c)
+                    ? IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () =>
+                            deleteComment(c['id_comment'], index),
+                      )
+                    : null,
+              );
+            },
+          ),
+
+          const SizedBox(height: 30),
+
+
           /// 🔥 SECTION 7 – BUY BUTTON (Jika Available)
-if (konten['status'] == "available" || konten['status'] == "published") ...[
-  const SizedBox(height: 20),
+          if (konten['status'] == "available" || konten['status'] == "published") ...[
+            const SizedBox(height: 20),
 
       ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
@@ -454,6 +685,7 @@ if (konten['status'] == "available" || konten['status'] == "published") ...[
 
         ],
       ),
+     ),
     );
   }
 
@@ -470,3 +702,4 @@ if (konten['status'] == "available" || konten['status'] == "published") ...[
     }
   }
 }
+ 

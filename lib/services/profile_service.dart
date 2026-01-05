@@ -15,7 +15,8 @@ class ProfileService {
     final base64Image = base64Encode(file.bytes!);
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/profil/upload-avatar'),
+      // Uri.parse('http://10.0.2.2:3000/profil/upload-avatar'),
+      Uri.parse('http://192.168.1.16:3000/profil/upload-avatar'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'id_user': userId,

@@ -44,6 +44,10 @@ class _KelolaKontenPageState extends State<KelolaKontenPage> {
   bool isLoading = true;
 
   String selectedFilter = "All";
+  String capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
+  }
 
   @override
   void initState() {
@@ -120,6 +124,39 @@ class _KelolaKontenPageState extends State<KelolaKontenPage> {
     setState(() {});
   }
 
+  Widget _buildStatusBadge(String status) {
+    Color color;
+
+    switch (status.toLowerCase()) {
+      case "published":
+        color = Colors.green;
+        break;
+      case "draft":
+        color = Colors.orange;
+        break;
+      case "sold":
+        color = Colors.blue;
+        break;
+      default:
+        color = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 
   Widget _buildFilterButton(String filter, IconData icon) {
     bool active = selectedFilter == filter;
@@ -148,6 +185,176 @@ class _KelolaKontenPageState extends State<KelolaKontenPage> {
           size: 24,
           color: active ? Colors.blue : Colors.grey,
         ),
+      ),
+    );
+  }
+
+  Widget buildAdminContentItem(Map item) {
+    List<String> images = [];
+
+    if (item["images"] is List) {
+      images = (item["images"] as List)
+          .map((e) =>
+              "http://192.168.6.16:3000/uploads/artworks/preview/${e['preview_url']}")
+          .toList();
+    }
+
+    String status = (item['status'] ?? 'draft').toLowerCase();
+
+    Color statusColor = {
+      "published": Colors.green,
+      "draft": Colors.grey,
+      "rejected": Colors.red,
+      "sold": Colors.orange,
+    }[status] ?? Colors.grey;
+
+    IconData statusIcon = {
+      "published": Icons.check_circle,
+      "draft": Icons.pending,
+      "rejected": Icons.close,
+      "sold": Icons.shopping_bag,
+    }[status] ?? Icons.help;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Stack(
+        children: [
+          // IMAGE
+          Positioned.fill(
+            child: images.isNotEmpty
+                ? Image.network(images[0], fit: BoxFit.cover)
+                : Container(color: Colors.grey.shade300),
+          ),
+
+          // GRADIENT
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+          ),
+
+          // CONTENT
+          Positioned(
+            bottom: 10,
+            left: 10,
+            right: 10,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item["title"] ?? "(Tanpa judul)",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 3),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.image,
+                            size: 14, color: Colors.white70),
+                        const SizedBox(width: 4),
+                        Text(
+                          images.length.toString(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(statusIcon,
+                              size: 11, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            capitalize(status),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 3),
+
+                Text(
+                  item["price"] != null
+                      ? "Rp ${item['price']}"
+                      : "Rp -",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                Row(
+                  children: [
+                    const Icon(Icons.comment,
+                        size: 14, color: Colors.white70),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${item['total_comment'] ?? 0}",
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // ADMIN ICON
+          Positioned(
+            top: 10,
+            right: 10,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.black38,
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: const Icon(
+                Icons.admin_panel_settings,
+                size: 18,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -205,58 +412,30 @@ class _KelolaKontenPageState extends State<KelolaKontenPage> {
                 Expanded(
                   child: filteredContents.isEmpty
                       ? const Center(child: Text("Tidak ada konten."))
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(12),
-                          itemCount: filteredContents.length,
-                          itemBuilder: (context, index) {
-                            final item = filteredContents[index];
+                      : LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount = 2;
 
-                            final title = item["title"] ?? "-";
-                            final user = item["username"] ?? "-";
+                          if (constraints.maxWidth > 1400) {
+                            crossAxisCount = 5;
+                          } else if (constraints.maxWidth > 1100) {
+                            crossAxisCount = 4;
+                          } else if (constraints.maxWidth > 800) {
+                            crossAxisCount = 3;
+                          }
 
-                            final images = item["images"] ?? [];
-                            String? thumb;
-
-                            if (images.isNotEmpty && images[0] is Map) {
-                              thumb = images[0]["preview_url"];
-                            }
-
-                            return Card(
-                              elevation: 2,
-                              margin: const EdgeInsets.only(bottom: 12),
-                              child: ListTile(
-                                leading: thumb != null
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(6),
-                                        child: Image.network(
-                                          // "http://10.0.2.2:3000/uploads/artworks/preview/$thumb",
-                                          // "http://192.168.6.16:3000/uploads/artworks/preview/$thumb",
-                                          // "https://murally-ultramicroscopical-mittie.ngrok-free.dev/uploads/artworks/preview/$thumb",
-                                          // "http://localhost:3000/uploads/artworks/preview/$thumb",
-                                          "http://192.168.137.188:3000/uploads/artworks/preview/$thumb",
-                                          width: 70,
-                                          height: 70,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
-                                    : Container(
-                                        width: 70,
-                                        height: 70,
-                                        color: Colors.grey.shade300,
-                                        child: const Icon(Icons.image_not_supported),
-                                      ),
-
-                                title: Text(
-                                  title,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-
-                                subtitle: Text("By: $user"),
-                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-
+                          return GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: filteredContents.length,
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 0.78,
+                            ),
+                            itemBuilder: (_, i) {
+                              final item = filteredContents[i];
+                              return GestureDetector(
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -271,10 +450,12 @@ class _KelolaKontenPageState extends State<KelolaKontenPage> {
                                     ),
                                   );
                                 },
-                              ),
-                            );
-                          },
-                        ),
+                                child: buildAdminContentItem(item),
+                              );
+                            },
+                          );
+                        },
+                      ),
                 ),
               ],
             ),
